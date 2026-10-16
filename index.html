@@ -176,6 +176,18 @@
     .posts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
     .post-card { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: 0 7px 18px #26334a08; }
     .post-image { width: 100%; max-height: 280px; display: block; object-fit: cover; background: #e9eee8; }
+    .post-image-button { display: block; width: 100%; padding: 0; border: 0; background: #e9eee8; cursor: zoom-in; }
+    .post-image-button:focus-visible { outline: 3px solid var(--green); outline-offset: -3px; }
+    .image-lightbox {
+      width: min(96vw, 1200px); max-width: none; max-height: 94vh; padding: 0; overflow: hidden;
+      border: 1px solid #ffffff30; border-radius: 16px; color: #fff; background: #111923;
+    }
+    .image-lightbox::backdrop { background: #101723e8; }
+    .lightbox-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 16px; }
+    .lightbox-title { min-width: 0; overflow: hidden; font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .lightbox-close { flex: 0 0 auto; min-height: 36px; padding: 6px 12px; border: 1px solid #ffffff45; border-radius: 9px; color: #fff; background: #ffffff18; font: inherit; font-weight: 700; cursor: pointer; }
+    .lightbox-close:hover { background: #ffffff30; }
+    .lightbox-image { display: block; width: 100%; max-height: calc(94vh - 62px); object-fit: contain; }
     .post-content { padding: 16px; }
     .post-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
     .post-content h3 { margin: 8px 0 6px; font-size: 17px; }
@@ -448,6 +460,13 @@
     </main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog class="image-lightbox" id="imageLightbox" aria-label="게시물 이미지 크게 보기">
+    <div class="lightbox-toolbar">
+      <span class="lightbox-title" id="lightboxTitle"></span>
+      <button class="lightbox-close" id="closeLightbox" type="button" aria-label="이미지 크게 보기 닫기">닫기 ✕</button>
+    </div>
+    <img class="lightbox-image" id="lightboxImage" alt="">
+  </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
@@ -619,7 +638,7 @@
       }
       container.innerHTML = posts.map(post => `
         <article class="post-card">
-          ${post.image ? `<img class="post-image" src="${post.image}" alt="${escapeHtml(post.title)} 스크린샷">` : ""}
+          ${post.image ? `<button class="post-image-button" type="button" data-open-image="${escapeHtml(post.id)}" aria-label="${escapeHtml(post.title)} 이미지 크게 보기"><img class="post-image" src="${post.image}" alt="${escapeHtml(post.title)} 스크린샷"></button>` : ""}
           <div class="post-content">
             <div class="post-meta"><span>👤 ${escapeHtml(post.author || "익명 친구")}</span><time>${escapeHtml(post.date)}</time></div>
             <h3>${escapeHtml(post.title)}</h3><p>${escapeHtml(post.body)}</p>
@@ -870,6 +889,16 @@
       }
     });
     $("#posts").addEventListener("click", async event => {
+      const imageButton = event.target.closest("[data-open-image]");
+      if (imageButton) {
+        const post = posts.find(item => item.id === imageButton.dataset.openImage);
+        if (!post?.image) return;
+        $("#lightboxImage").src = post.image;
+        $("#lightboxImage").alt = `${post.title} 스크린샷 크게 보기`;
+        $("#lightboxTitle").textContent = post.title;
+        $("#imageLightbox").showModal();
+        return;
+      }
       const button = event.target.closest("[data-delete-post]");
       if (!button) return;
       const index = posts.findIndex(post => post.id === button.dataset.deletePost);
@@ -897,6 +926,10 @@
       const [removed] = posts.splice(index, 1);
       if (!saveLocal(STORE.posts, posts, "게시물")) posts.splice(index, 0, removed);
       renderPosts();
+    });
+    $("#closeLightbox").addEventListener("click", () => $("#imageLightbox").close());
+    $("#imageLightbox").addEventListener("click", event => {
+      if (event.target === $("#imageLightbox")) $("#imageLightbox").close();
     });
     $("#refreshPosts").addEventListener("click", () => {
       if (sharedBoard) loadSharedPosts();
