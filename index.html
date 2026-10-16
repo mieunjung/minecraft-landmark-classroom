@@ -167,6 +167,9 @@
     .wide { grid-column: 1 / -1; }
     .upload-box { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px; border: 1px dashed #c9c8bd; border-radius: 12px; background: #fcfbf7; }
     .upload-box input { max-width: 100%; font-size: 12px; }
+    .paste-hint { flex: 1 1 100%; padding: 13px; border: 1px dashed #c3d7c8; border-radius: 10px; color: #466451; background: #f2f8f1; font-size: 13px; text-align: center; }
+    .paste-hint:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+    .paste-hint strong { display: block; margin-bottom: 3px; color: #315b40; }
     .image-preview { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
     .image-preview img { width: 72px; height: 54px; object-fit: cover; border-radius: 8px; }
     .composer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
@@ -431,7 +434,10 @@
               <div class="field"><label for="postAuthor">내 이름 (별명도 좋아요)</label><input class="note-input" id="postAuthor" maxlength="24" placeholder="예: 블록마법사" autocomplete="off"></div>
               <div class="field"><label for="postTitle">게시물 제목</label><input class="note-input" id="postTitle" maxlength="70" placeholder="예: 나만의 피사의 사탑 완성!" required></div>
               <div class="field wide"><label for="postBody">작품 이야기</label><textarea class="note-area" id="postBody" maxlength="1200" placeholder="어떤 랜드마크를 만들었나요? 사용한 블록이나 만들면서 재미있었던 점을 적어 주세요." required></textarea></div>
-              <div class="field wide"><label for="postImage">스크린샷 붙이기 (선택)</label><div class="upload-box"><input id="postImage" type="file" accept="image/*"><span class="note-small">이미지를 고르면 게시물에 미리보기가 붙어요. 사진은 이 기기에 저장됩니다.</span><div class="image-preview" id="imagePreview" aria-live="polite"></div></div></div>
+              <div class="field wide"><label for="postImage">스크린샷 첨부하기 (선택)</label><div class="upload-box" id="imagePasteArea">
+                <div class="paste-hint" tabindex="0"><strong>📋 스크린샷을 여기에 붙여넣기</strong>화면을 클릭한 다음 Ctrl + V를 누르세요. 그림판이나 캡처 도구에서 복사한 이미지도 붙일 수 있어요.</div>
+                <span class="note-small">파일로 올리려면 아래에서 이미지를 선택하세요.</span><input id="postImage" type="file" accept="image/*"><div class="image-preview" id="imagePreview" aria-live="polite"></div>
+              </div></div>
             </div>
             <div class="composer-bottom"><span class="note-small">사진에는 본명, 학교, 계정 이름 등 개인정보가 보이지 않도록 확인하세요.</span><button class="btn" type="submit">📌 게시물 올리기</button></div>
           </form>
@@ -790,21 +796,32 @@
     }));
     $("#postImage").addEventListener("change", async event => {
       const file = event.target.files?.[0];
-      selectedImage = "";
-      $("#imagePreview").replaceChildren();
-      if (!file) return;
+      if (file) await selectPostImage(file);
+    });
+    async function selectPostImage(file) {
       try {
-        selectedImage = await compressImage(file);
+        const imageData = await compressImage(file);
+        selectedImage = imageData;
         const img = document.createElement("img");
-        img.src = selectedImage; img.alt = "게시물에 올릴 사진 미리보기";
+        img.src = imageData; img.alt = "게시물에 올릴 사진 미리보기";
         const label = document.createElement("span");
-        label.textContent = `${file.name} · 사진을 붙였어요`;
-        $("#imagePreview").append(img, label);
+        label.textContent = `${file.name || "붙여넣은 스크린샷"} · 사진이 첨부됐어요`;
+        $("#imagePreview").replaceChildren(img, label);
       } catch (error) {
         console.error("이미지 처리에 실패했습니다.", error);
         showToast(error.message || "이미지를 준비하지 못했어요.");
-        event.target.value = "";
+        $("#postImage").value = "";
       }
+    }
+    $("#postForm").addEventListener("paste", async event => {
+      const items = [...(event.clipboardData?.items || [])];
+      const imageItem = items.find(item => item.kind === "file" && item.type.startsWith("image/"));
+      if (!imageItem) return;
+      const file = imageItem.getAsFile();
+      if (!file) return;
+      event.preventDefault();
+      await selectPostImage(file);
+      showToast("스크린샷을 붙였어요. 제목과 이야기를 적고 게시해 주세요!");
     });
     $("#postForm").addEventListener("submit", async event => {
       event.preventDefault();
