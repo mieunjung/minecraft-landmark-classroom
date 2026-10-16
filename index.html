@@ -417,8 +417,9 @@
             <span class="hero-tag" aria-hidden="true">📌</span>
           </header>
           <div class="board-toolbar">
-            <p>게시물 <strong id="postCount">0</strong>개 · 이 브라우저에 자동 저장돼요.</p>
+            <p>게시물 <strong id="postCount">0</strong>개 · <span id="boardStatus">이 브라우저에 저장돼요.</span></p>
             <div class="board-actions">
+              <button class="btn btn-secondary btn-quiet" id="refreshPosts" type="button">게시물 새로고침</button>
               <button class="btn btn-secondary btn-quiet" id="exportPosts" type="button">게시판 내보내기</button>
               <button class="btn btn-secondary btn-quiet" id="importPosts" type="button">게시판 가져오기</button>
               <input id="importFile" type="file" accept="application/json,.json" hidden>
@@ -435,13 +436,15 @@
             <div class="composer-bottom"><span class="note-small">사진에는 본명, 학교, 계정 이름 등 개인정보가 보이지 않도록 확인하세요.</span><button class="btn" type="submit">📌 게시물 올리기</button></div>
           </form>
           <div class="posts" id="posts" aria-live="polite"></div>
-          <div class="info-strip">📦 친구와 나누려면 <strong>게시판 내보내기</strong>로 파일을 만든 뒤 전달하고, 친구가 <strong>게시판 가져오기</strong>를 눌러 그 파일을 선택하면 돼요. 같은 기기·브라우저에서는 자동으로 함께 보여요.</div>
+          <div class="info-strip" id="boardNotice">현재 게시판은 이 브라우저에만 저장돼요. 다른 친구와 공유하려면 Supabase 설정이 필요합니다. 게시판을 온라인으로 열면 글과 사진이 공개되니 본명, 학교, 얼굴, 주소, 계정 이름 같은 개인정보는 올리지 마세요.</div>
         </section>
       </div>
     </main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script>
     "use strict";
     const landmarks = [
@@ -457,10 +460,16 @@
       { id: "pyramid", name: "거북선", place: "대한민국 조선 시대", description: "거북이 등처럼 덮인 지붕과 용머리가 특징인 조선 시대의 군함이에요.", tip: "거북 등 모양의 지붕과 용머리", color: "#e7eee0", image: "assets/landmarks/turtle-ship.png" }
     ];
     const STORE = { roulette: "landmark-classroom-roulette-v1", posts: "landmark-classroom-posts-v1" };
+    const IMAGE_BUCKET = "landmark-post-images";
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
     let assigned = readStored(STORE.roulette, []);
     let posts = readStored(STORE.posts, []);
+    let supabaseClient = null;
+    let boardUserId = null;
+    let sharedBoard = false;
+    let boardReady = true;
+    let boardChannel = null;
     let selectedImage = "";
     let wheelRotation = 0;
     let spinning = false;
@@ -608,7 +617,7 @@
           <div class="post-content">
             <div class="post-meta"><span>👤 ${escapeHtml(post.author || "익명 친구")}</span><time>${escapeHtml(post.date)}</time></div>
             <h3>${escapeHtml(post.title)}</h3><p>${escapeHtml(post.body)}</p>
-            <button class="post-delete" type="button" data-delete-post="${escapeHtml(post.id)}" aria-label="${escapeHtml(post.title)} 게시물 지우기">이 게시물 지우기</button>
+            ${!sharedBoard || post.author_id === boardUserId ? `<button class="post-delete" type="button" data-delete-post="${escapeHtml(post.id)}" aria-label="${escapeHtml(post.title)} 게시물 지우기">이 게시물 지우기</button>` : ""}
           </div>
         </article>`).join("");
     }
@@ -640,9 +649,99 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    function setBoardStatus(message, isError = false) {
+      const status = $("#boardStatus");
+      status.textContent = message;
+      status.style.color = isError ? "#a33b35" : "";
+    }
+    function normalizeSharedPost(row) {
+      return {
+        id: row.id,
+        author: row.author,
+        title: row.title,
+        body: row.body,
+        image: row.image_url || "",
+        date: new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "short", day: "numeric" }).format(new Date(row.created_at)),
+        author_id: row.author_id
+      };
+    }
+    async function loadSharedPosts() {
+      if (!sharedBoard || !boardReady) return;
+      setBoardStatus("친구들의 게시물을 불러오는 중이에요…");
+      const { data, error } = await supabaseClient
+        .from("landmark_posts")
+        .select("id, author, title, body, image_url, created_at, author_id")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) {
+        console.error("공유 게시물을 불러오지 못했습니다.", error);
+        setBoardStatus("게시물을 불러오지 못했어요. 새로고침을 눌러 주세요.", true);
+        showToast("공유 게시판 연결에 실패했어요.");
+        return;
+      }
+      posts = data.map(normalizeSharedPost);
+      renderPosts();
+      setBoardStatus("온라인 공유 게시판 · 친구들에게도 보여요.");
+    }
+    async function initializeSharedBoard() {
+      const config = window.LANDMARK_SUPABASE_CONFIG;
+      if (!config?.url && !config?.anonKey) return;
+      sharedBoard = true;
+      boardReady = false;
+      $("#boardStatus").textContent = "공유 게시판에 연결 중이에요…";
+      $("#boardNotice").textContent = "온라인 게시판에 올라온 글과 사진은 누구나 볼 수 있어요. 본명, 학교, 얼굴, 주소, 계정 이름 같은 개인정보는 올리지 마세요. 작성한 브라우저에서 본인 글을 지울 수 있고, 선생님은 Supabase 관리 화면에서 게시물을 관리할 수 있어요.";
+      $("#exportPosts").hidden = true;
+      $("#importPosts").hidden = true;
+      if (!config.url || !config.anonKey) {
+        setBoardStatus("supabase-config.js에 URL과 anon key를 설정해 주세요.", true);
+        return;
+      }
+      if (!window.supabase?.createClient) {
+        setBoardStatus("공유 게시판 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.", true);
+        return;
+      }
+      try {
+        supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+        let user = sessionData.session?.user;
+        if (!user) {
+          const { data, error } = await supabaseClient.auth.signInAnonymously();
+          if (error) throw error;
+          user = data.user;
+        }
+        if (!user) throw new Error("익명 사용자 계정을 만들지 못했어요.");
+        boardUserId = user.id;
+        boardReady = true;
+        setBoardStatus("온라인 공유 게시판 · 친구들에게도 보여요.");
+        await loadSharedPosts();
+        boardChannel = supabaseClient
+          .channel("landmark-posts-updates")
+          .on("postgres_changes", { event: "*", schema: "public", table: "landmark_posts" }, loadSharedPosts)
+          .subscribe();
+      } catch (error) {
+        console.error("공유 게시판을 초기화하지 못했습니다.", error);
+        boardReady = false;
+        setBoardStatus("공유 게시판 연결에 실패했어요. 설정과 익명 로그인을 확인해 주세요.", true);
+      }
+    }
+    async function uploadSharedImage(dataUrl) {
+      if (!dataUrl) return null;
+      const image = await fetch(dataUrl).then(response => response.blob());
+      const path = `${boardUserId}/${crypto.randomUUID()}.jpg`;
+      const { error } = await supabaseClient.storage.from(IMAGE_BUCKET).upload(path, image, {
+        contentType: "image/jpeg",
+        upsert: false
+      });
+      if (error) throw error;
+      const { data } = supabaseClient.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+      return { path, url: data.publicUrl };
+    }
+
     renderLandmarks();
     renderAssignments();
     renderPosts();
+    initializeSharedBoard();
     $("#landmarkGrid").addEventListener("click", event => {
       const trigger = event.target.closest("[data-example-id]");
       if (!trigger) return;
@@ -707,28 +806,84 @@
         event.target.value = "";
       }
     });
-    $("#postForm").addEventListener("submit", event => {
+    $("#postForm").addEventListener("submit", async event => {
       event.preventDefault();
       const title = $("#postTitle").value.trim(), body = $("#postBody").value.trim();
       if (!title || !body) { showToast("제목과 작품 이야기를 모두 적어 주세요."); return; }
+      if (!boardReady) { showToast("공유 게시판에 아직 연결되지 않았어요. 설정을 확인해 주세요."); return; }
+      const submitButton = $("button[type='submit']", event.currentTarget);
+      submitButton.disabled = true;
       const post = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        author: $("#postAuthor").value.trim(), title, body, image: selectedImage,
+        id: sharedBoard ? "" : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        author: $("#postAuthor").value.trim() || "익명 친구", title, body, image: selectedImage,
         date: new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "short", day: "numeric" }).format(new Date())
       };
-      posts.unshift(post);
-      if (!saveLocal(STORE.posts, posts, "게시물")) { posts.shift(); return; }
-      event.target.reset(); selectedImage = ""; $("#imagePreview").replaceChildren();
-      renderPosts(); showToast("작품을 게시판에 올렸어요! 멋진 작품이에요 🎉");
+      let uploadedImage = null;
+      try {
+        if (sharedBoard) {
+          uploadedImage = await uploadSharedImage(selectedImage);
+          const { data, error } = await supabaseClient.from("landmark_posts").insert({
+            author: post.author,
+            title: post.title,
+            body: post.body,
+            image_url: uploadedImage?.url || null,
+            author_id: boardUserId
+          }).select("id, author, title, body, image_url, created_at, author_id").single();
+          if (error) throw error;
+          posts.unshift(normalizeSharedPost(data));
+        } else {
+          posts.unshift(post);
+          if (!saveLocal(STORE.posts, posts, "게시물")) { posts.shift(); return; }
+        }
+        event.target.reset(); selectedImage = ""; $("#imagePreview").replaceChildren();
+        renderPosts(); showToast("작품을 게시판에 올렸어요! 멋진 작품이에요 🎉");
+      } catch (error) {
+        console.error("게시물을 올리지 못했습니다.", error);
+        if (uploadedImage) {
+          try {
+            const { error: cleanupError } = await supabaseClient.storage.from(IMAGE_BUCKET).remove([uploadedImage.path]);
+            if (cleanupError) console.error("게시하지 못한 이미지 정리에 실패했습니다.", cleanupError);
+          } catch (cleanupError) {
+            console.error("게시하지 못한 이미지 정리에 실패했습니다.", cleanupError);
+          }
+        }
+        showToast("게시물을 올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+      } finally {
+        submitButton.disabled = false;
+      }
     });
-    $("#posts").addEventListener("click", event => {
+    $("#posts").addEventListener("click", async event => {
       const button = event.target.closest("[data-delete-post]");
       if (!button) return;
       const index = posts.findIndex(post => post.id === button.dataset.deletePost);
       if (index < 0) return;
+      if (sharedBoard) {
+        const { error } = await supabaseClient.from("landmark_posts").delete().eq("id", button.dataset.deletePost);
+        if (error) {
+          console.error("게시물을 지우지 못했습니다.", error);
+          showToast("게시물을 지우지 못했어요. 작성한 계정인지 확인해 주세요.");
+          return;
+        }
+        if (posts[index].image) {
+          const marker = `/storage/v1/object/public/${IMAGE_BUCKET}/`;
+          const pathIndex = posts[index].image.indexOf(marker);
+          if (pathIndex !== -1) {
+            const path = decodeURIComponent(posts[index].image.slice(pathIndex + marker.length));
+            const { error: imageError } = await supabaseClient.storage.from(IMAGE_BUCKET).remove([path]);
+            if (imageError) console.error("게시물 이미지를 정리하지 못했습니다.", imageError);
+          }
+        }
+        posts.splice(index, 1);
+        renderPosts();
+        return;
+      }
       const [removed] = posts.splice(index, 1);
       if (!saveLocal(STORE.posts, posts, "게시물")) posts.splice(index, 0, removed);
       renderPosts();
+    });
+    $("#refreshPosts").addEventListener("click", () => {
+      if (sharedBoard) loadSharedPosts();
+      else { renderPosts(); showToast("이 브라우저의 게시물을 다시 불러왔어요."); }
     });
     $("#exportPosts").addEventListener("click", () => {
       if (!posts.length) { showToast("내보낼 게시물이 아직 없어요."); return; }
@@ -753,6 +908,9 @@
         console.error("게시판 파일을 가져오지 못했습니다.", error);
         showToast(error.message || "게시판 파일을 읽지 못했어요.");
       } finally { event.target.value = ""; }
+    });
+    window.addEventListener("beforeunload", () => {
+      if (boardChannel) supabaseClient.removeChannel(boardChannel);
     });
   </script>
 </body>
