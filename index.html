@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#182438">
+  <title>마인크래프트 랜드마크 건축 교실</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202a3a;
+      --muted: #667085;
+      --paper: #fffdf7;
+      --cream: #f5f1e7;
+      --navy: #182438;
+      --green: #2e8060;
+      --mint: #e4f4e9;
+      --yellow: #ffd166;
+      --coral: #f27c62;
+      --line: #e9e5db;
+      --shadow: 0 16px 40px #26334a12;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--cream);
+      font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+      line-height: 1.6;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; padding: 30px 22px;
+      display: flex; flex-direction: column; color: #f7f7f2; background: var(--navy);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; margin: 0 0 35px; }
+    .brand-mark {
+      width: 44px; height: 44px; display: grid; place-items: center;
+      border-radius: 14px; color: var(--navy); background: var(--yellow); font-size: 24px;
+    }
+    .brand strong { display: block; font-size: 16px; line-height: 1.25; }
+    .brand small { color: #bdc6d2; font-size: 12px; }
+    .side-label { margin: 0 0 10px 12px; color: #9eaabb; font-size: 11px; font-weight: 800; letter-spacing: .11em; }
+    .chapter-nav { display: grid; gap: 8px; }
+    .chapter-link {
+      width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px;
+      border: 1px solid transparent; border-radius: 13px; color: #e5eaf0;
+      background: transparent; text-align: left; transition: .18s ease;
+    }
+    .chapter-link:hover { background: #ffffff10; }
+    .chapter-link[aria-current="page"] { color: #fff; background: #ffffff16; border-color: #ffffff20; }
+    .chapter-number {
+      width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center;
+      border-radius: 10px; color: var(--navy); background: #d7e4d8; font-weight: 900;
+    }
+    .chapter-link[aria-current="page"] .chapter-number { background: var(--yellow); }
+    .chapter-link span:last-child { display: grid; line-height: 1.3; }
+    .chapter-link b { font-size: 13px; }
+    .chapter-link small { margin-top: 4px; color: #aeb9c8; font-size: 11px; }
+    .sidebar-note {
+      margin-top: auto; padding: 15px; border: 1px solid #ffffff20; border-radius: 15px;
+      color: #d4dbe4; background: #ffffff0a; font-size: 12px;
+    }
+    .sidebar-note strong { display: block; margin-bottom: 4px; color: var(--yellow); }
+    .main { min-width: 0; padding: 30px clamp(18px, 4vw, 58px) 60px; }
+    .topbar { max-width: 1100px; margin: 0 auto 28px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .crumb { color: var(--muted); font-size: 13px; }
+    .class-badge { padding: 7px 12px; border: 1px solid #ded8c9; border-radius: 99px; color: #586273; background: #ffffff90; font-size: 12px; font-weight: 700; }
+    .content { max-width: 1100px; margin: auto; }
+    .chapter { animation: appear .25s ease; }
+    .chapter[hidden] { display: none; }
+    @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .hero {
+      position: relative; overflow: hidden; margin-bottom: 24px; padding: clamp(25px, 4vw, 44px);
+      border-radius: 25px; background: var(--paper); box-shadow: var(--shadow);
+    }
+    .hero::after { content: ""; position: absolute; width: 200px; height: 200px; right: -54px; top: -65px; border-radius: 48%; background: #e5f3e9; transform: rotate(28deg); }
+    .eyebrow { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 9px; color: var(--green); font-size: 12px; font-weight: 900; letter-spacing: .07em; }
+    h1 { position: relative; z-index: 1; margin: 0; font-size: clamp(27px, 4vw, 40px); line-height: 1.25; letter-spacing: -.04em; }
+    .hero p { position: relative; z-index: 1; max-width: 650px; margin: 12px 0 0; color: var(--muted); }
+    .hero-tag { position: absolute; z-index: 1; right: 35px; bottom: 30px; font-size: 46px; transform: rotate(-8deg); }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 29px 2px 13px; }
+    .section-head h2 { margin: 0; font-size: 20px; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+    .landmark-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+    .landmark-card {
+      overflow: hidden; min-height: 145px; border: 1px solid var(--line); border-radius: 18px; background: var(--paper);
+      box-shadow: 0 7px 18px #26334a08;
+    }
+    .landmark-trigger {
+      width: 100%; min-height: 145px; display: grid; grid-template-columns: 142px minmax(0, 1fr);
+      padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer;
+    }
+    .landmark-trigger:focus-visible { outline: 3px solid var(--green); outline-offset: -3px; }
+    .landmark-trigger:hover .landmark-copy h3 { color: var(--green); }
+    .landmark-art { position: relative; display: grid; place-items: center; overflow: hidden; min-height: 145px; background: var(--art-bg, #eaf3ea); }
+    .landmark-art::after { content: ""; position: absolute; width: 100px; height: 35px; bottom: -20px; border-radius: 50%; background: #ffffff75; }
+    .landmark-art svg { z-index: 1; width: 108px; height: 108px; filter: drop-shadow(0 7px 4px #23321e20); }
+    .landmark-copy { align-self: center; padding: 15px; }
+    .landmark-copy h3 { margin: 0 0 5px; font-size: 16px; }
+    .landmark-copy p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .build-tip { display: inline-block; margin-top: 9px; padding: 3px 8px; border-radius: 99px; color: #38644a; background: var(--mint); font-size: 10px; font-weight: 800; }
+    .landmark-example { padding: 15px; border-top: 1px solid var(--line); background: #fffefa; }
+    .landmark-example[hidden] { display: none; }
+    .example-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .example-heading h4 { margin: 0; font-size: 13px; }
+    .example-note { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+    .landmark-example-image { display: block; width: 100%; max-height: 420px; object-fit: contain; border: 1px solid var(--line); border-radius: 11px; background: #eef2f4; }
+    .info-strip { margin-top: 18px; padding: 14px 17px; border-radius: 14px; color: #5b5c50; background: #fff5d8; font-size: 13px; }
+    .panel { padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line); border-radius: 22px; background: var(--paper); box-shadow: var(--shadow); }
+    .roulette-layout { display: grid; grid-template-columns: minmax(270px, .95fr) minmax(260px, 1fr); align-items: center; gap: 30px; }
+    .wheel-area { position: relative; width: min(100%, 390px); margin: auto; }
+    .wheel-pointer { position: absolute; z-index: 2; top: -3px; left: 50%; width: 0; height: 0; border-top: 26px solid var(--coral); border-right: 17px solid transparent; border-left: 17px solid transparent; transform: translateX(-50%); filter: drop-shadow(0 3px 2px #0003); }
+    #rouletteWheel { display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; filter: drop-shadow(0 8px 10px #17243a20); transform: rotate(0deg); }
+    .roulette-side h2 { margin: 0 0 7px; font-size: 24px; }
+    .roulette-side > p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+    .student-label { display: block; margin: 0 0 7px; font-size: 12px; font-weight: 800; }
+    .text-input, .note-input, .note-area {
+      width: 100%; border: 1px solid #d8d6ce; border-radius: 11px; color: var(--ink); background: #fff;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .text-input { padding: 11px 13px; }
+    .note-input:focus, .note-area:focus, .text-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px #2e80601c; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px;
+      padding: 9px 15px; border: 0; border-radius: 11px; color: white; background: var(--green);
+      font-weight: 800; transition: transform .12s, filter .12s;
+    }
+    .btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .btn:disabled { cursor: not-allowed; filter: grayscale(.6); opacity: .6; transform: none; }
+    .btn-secondary { color: #445064; border: 1px solid #dadfe3; background: #fff; }
+    .btn-quiet { min-height: 34px; padding: 6px 10px; color: #4f5966; border: 1px solid #e0ded6; background: transparent; font-size: 12px; }
+    .roulette-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
+    .roulette-actions .btn:first-child { flex: 1; }
+    .spin-result { min-height: 72px; margin: 17px 0; padding: 13px 15px; border: 1px dashed #c6d8cb; border-radius: 14px; background: #f2f8f1; }
+    .spin-result strong { color: var(--green); }
+    .assigned-list { margin: 0; padding-left: 20px; color: #485366; font-size: 13px; }
+    .assigned-list li + li { margin-top: 5px; }
+    .empty-assigned { color: var(--muted); font-size: 13px; }
+    .note-small { color: var(--muted); font-size: 11px; }
+    .steps { display: grid; gap: 14px; }
+    .step-card { padding: 20px; border: 1px solid var(--line); border-radius: 17px; background: var(--paper); }
+    .step-title { display: flex; align-items: flex-start; gap: 12px; }
+    .step-num { flex: 0 0 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: #275540; background: var(--mint); font-weight: 900; }
+    .step-title h3 { margin: 1px 0 2px; font-size: 17px; }
+    .step-title p { margin: 0; color: var(--muted); font-size: 12px; }
+    .step-body { margin: 14px 0 0 50px; color: #485366; font-size: 14px; }
+    .step-body ul { padding-left: 18px; margin: 8px 0 13px; }
+    .step-body li + li { margin-top: 4px; }
+    details.prompt-box { margin: 12px 0 0 50px; overflow: hidden; border: 1px solid #e8dcb8; border-radius: 12px; background: #fffaf0; }
+    .prompt-box summary { padding: 11px 13px; color: #785c1c; font-size: 13px; font-weight: 800; cursor: pointer; }
+    .prompt-content { padding: 0 13px 13px; }
+    .prompt-content blockquote { margin: 0 0 10px; padding: 12px; border-left: 3px solid var(--yellow); border-radius: 0 8px 8px 0; color: #4e4a3d; background: #fff; font-size: 13px; white-space: pre-wrap; }
+    .prompt-tip { margin: 12px 0 0 50px; padding: 10px 13px; border-radius: 10px; color: #4e6556; background: #edf5ed; font-size: 12px; }
+    .board-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
+    .board-toolbar p { margin: 0; color: var(--muted); font-size: 12px; }
+    .board-actions { display: flex; gap: 8px; }
+    .composer { margin-bottom: 22px; padding: clamp(18px, 3vw, 26px); border: 1px solid #e7e2d7; border-radius: 18px; background: #fff; box-shadow: var(--shadow); }
+    .composer h2 { margin: 0 0 14px; font-size: 19px; }
+    .composer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 12px; font-weight: 800; }
+    .note-input { padding: 10px 12px; }
+    .note-area { min-height: 120px; padding: 12px; resize: vertical; }
+    .wide { grid-column: 1 / -1; }
+    .upload-box { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px; border: 1px dashed #c9c8bd; border-radius: 12px; background: #fcfbf7; }
+    .upload-box input { max-width: 100%; font-size: 12px; }
+    .image-preview { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .image-preview img { width: 72px; height: 54px; object-fit: cover; border-radius: 8px; }
+    .composer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+    .posts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+    .post-card { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: 0 7px 18px #26334a08; }
+    .post-image { width: 100%; max-height: 280px; display: block; object-fit: cover; background: #e9eee8; }
+    .post-content { padding: 16px; }
+    .post-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
+    .post-content h3 { margin: 8px 0 6px; font-size: 17px; }
+    .post-content p { margin: 0; color: #4e5867; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .post-delete { margin-top: 12px; padding: 4px 0; border: 0; color: #8b5c58; background: transparent; font-size: 11px; text-decoration: underline; }
+    .empty-posts { grid-column: 1 / -1; padding: 35px 20px; border: 1px dashed #d6d2c7; border-radius: 16px; color: var(--muted); background: #fffefa; text-align: center; }
+    .toast { position: fixed; z-index: 10; left: 50%; bottom: 24px; max-width: calc(100% - 28px); padding: 11px 17px; border-radius: 99px; color: #fff; background: var(--navy); box-shadow: var(--shadow); font-size: 13px; transform: translate(-50%, 120px); transition: transform .25s ease; }
+    .toast.show { transform: translate(-50%, 0); }
+    @media (max-width: 850px) {
+      .app { grid-template-columns: 220px minmax(0, 1fr); }
+      .sidebar { padding: 22px 14px; }
+      .landmark-grid { grid-template-columns: 1fr; }
+      .roulette-layout { grid-template-columns: 1fr; }
+      .wheel-area { width: min(82vw, 350px); }
+    }
+    @media (max-width: 620px) {
+      .app { display: block; }
+      .sidebar { position: sticky; z-index: 5; top: 0; height: auto; padding: 10px 12px; }
+      .brand { margin: 0 0 9px; }
+      .brand-mark { width: 35px; height: 35px; border-radius: 11px; font-size: 19px; }
+      .brand strong { font-size: 13px; }
+      .brand small, .side-label, .sidebar-note { display: none; }
+      .chapter-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+      .chapter-link { display: grid; justify-items: center; gap: 4px; padding: 6px 2px; text-align: center; }
+      .chapter-number { width: 28px; height: 27px; border-radius: 8px; }
+      .chapter-link b { font-size: 10px; }
+      .chapter-link small { display: none; }
+      .main { padding: 15px 13px 40px; }
+      .topbar { margin-bottom: 14px; }
+      .hero-tag { right: 19px; bottom: 21px; font-size: 34px; }
+      .landmark-trigger { grid-template-columns: 112px minmax(0, 1fr); min-height: 130px; }
+      .landmark-art { min-height: 130px; }
+      .landmark-art svg { width: 90px; height: 90px; }
+      .landmark-copy { padding: 11px; }
+      .landmark-copy h3 { font-size: 14px; }
+      .landmark-copy p { font-size: 11px; }
+      .landmark-example { padding: 11px; }
+      .landmark-example-image { max-height: 340px; }
+      .step-body, details.prompt-box, .prompt-tip { margin-left: 0; }
+      .step-body { margin-top: 12px; }
+      .composer-grid, .posts { grid-template-columns: 1fr; }
+      .wide { grid-column: auto; }
+      .composer-bottom { align-items: flex-start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+    <symbol id="art-palace" viewBox="0 0 120 120">
+      <path fill="#78a66c" d="M7 96h106v7H7z"/>
+      <path fill="#d8c39c" d="M22 50h76v43H22z"/>
+      <path fill="#a94c3c" d="M16 48q10 0 16-7 15 6 28-11 13 21 28 11 6 7 16 7l-5 8H21z"/>
+      <path fill="#6e4638" d="M17 48q12-1 17-9 15 7 26-10 12 21 26 10 6 8 17 9v5H17z"/>
+      <path fill="#b75b42" d="M28 55h7v38h-7zm27 0h9v38h-9zm31 0h7v38h-7z"/>
+      <path fill="#55463b" d="M19 92h82v5H19z"/>
+      <path fill="#59463b" d="M43 92V72q17-21 34 0v20z"/>
+      <path fill="#e2c89a" d="M48 92V74q12-14 24 0v18z"/>
+      <path fill="#9d4537" d="M45 74q15-17 30 0l-4 4q-11-12-22 0z"/>
+    </symbol>
+    <symbol id="art-eiffel" viewBox="0 0 120 120">
+      <path fill="#4d6c72" d="M55 16h10l2 10h-14zM54 27h12l5 30h-22zM46 58h28l8 26H38zM36 83h48l10 12H26z"/>
+      <path stroke="#e9d4a1" stroke-width="3" fill="none" d="m50 43 20 17m0-17L50 60m-7 8 34 12m-34 0 34-12M60 27v66"/>
+      <path fill="#557e55" d="M12 96h96v7H12z"/>
+    </symbol>
+    <symbol id="art-pisa" viewBox="0 0 120 120">
+      <path fill="#69a56c" d="M10 96h100v8H10z"/>
+      <g transform="rotate(9 62 61)">
+        <path fill="#f2e4c8" d="M42 34h39v59H42z"/><path fill="#ba7753" d="M39 28h45v8H39zm-3 13h52v6H36zm-2 47h56v8H34z"/>
+        <path fill="#b97d56" d="M38 33h5v59h-5zm37 0h5v59h-5z"/>
+        <path fill="#5e7181" d="M48 44h8v14h-8zm18 0h8v14h-8zm-18 20h8v14h-8zm18 0h8v14h-8z"/>
+        <path fill="#f2e4c8" d="M45 27q17-26 34 0z"/><path fill="#bc7850" d="M42 26h40v5H42z"/>
+      </g>
+    </symbol>
+    <symbol id="art-colosseum" viewBox="0 0 120 120">
+      <path fill="#d9a273" d="M14 47q46-34 92 0v48H14z"/><path fill="#bd7950" d="M14 44q46-34 92 0v8q-46-31-92 0z"/>
+      <path fill="#f4d4a8" d="M21 57h13v21H21zm23-7h13v28H44zm23 0h13v28H67zm23 7h10v21H90z"/>
+      <path fill="#754d3e" d="M21 63q6-12 13 0v15H21zm23-1q6-14 13 0v17H44zm23 0q6-14 13 0v17H67zm23 1q5-12 10 0v15H90z"/>
+      <path fill="#995b45" d="M11 82h98v7H11zm-3 9h104v7H8z"/><path fill="#78a66e" d="M4 98h112v6H4z"/>
+    </symbol>
+    <symbol id="art-taj" viewBox="0 0 120 120">
+      <path fill="#79a875" d="M8 98h104v6H8z"/><path fill="#f1e7d3" d="M20 53h80v41H20z"/>
+      <path fill="#e9d6b5" d="M42 53q18-41 36 0z"/><path fill="#c38f62" d="M40 52h40v5H40z"/>
+      <path fill="#d9c49f" d="M14 94V39h12v55zm80 0V39h12v55z"/><path fill="#f3e6cd" d="M12 39h16l-8-23zm80 0h16l-8-23z"/>
+      <path fill="#4e705b" d="M49 94V74q11-16 22 0v20z"/><path fill="#a15c4f" d="M57 74q3-5 6 0v20h-6z"/>
+      <path fill="#c8a576" d="M16 37h8v4h-8zm80 0h8v4h-8z"/>
+    </symbol>
+    <symbol id="art-bigben" viewBox="0 0 120 120">
+      <path fill="#547b61" d="M10 98h100v6H10z"/><path fill="#d4a763" d="M38 39h44v57H38z"/>
+      <path fill="#bf9154" d="M34 37h52v7H34zM34 56h52v5H34zM34 91h52v6H34z"/>
+      <path fill="#b77b49" d="M43 31h34l-6 8H49zM46 26h28v6H46z"/><path fill="#d4a763" d="m46 26 14-15 14 15z"/>
+      <circle cx="60" cy="69" r="12" fill="#f6efcd"/><circle cx="60" cy="69" r="9" fill="#fff8dc"/>
+      <path stroke="#54634f" stroke-width="2" d="M60 69V62m0 7 6 3"/><path fill="#596d69" d="M45 81h8v15h-8zm22 0h8v15h-8z"/>
+    </symbol>
+    <symbol id="art-liberty" viewBox="0 0 120 120">
+      <path fill="#63a270" d="M12 98h96v7H12z"/><path fill="#51917a" d="M39 83h42l9 15H30zM45 73h30v13H45z"/>
+      <path fill="#72a58c" d="M50 40h20l7 34H43z"/><path fill="#6a9d84" d="m48 44-12 24 9 4 12-22m15-3 15 23-8 6-15-22"/>
+      <circle cx="60" cy="33" r="10" fill="#73a58d"/><path fill="#729d82" d="m50 26 10-9 10 9-10 4z"/>
+      <path stroke="#b87944" stroke-width="3" d="M68 42 81 20m-5 0h10m-5-5v10"/>
+      <path fill="#8fb59a" d="M50 47h20l-3 8H53z"/><path fill="#3f7867" d="M39 83h42v5H39z"/>
+    </symbol>
+    <symbol id="art-wall" viewBox="0 0 120 120">
+      <path fill="#82a96c" d="M8 93h104v11H8z"/><path fill="#7c5440" d="m11 82 16-15 16 15v14H11zm30-13 17-16 17 16v27H41zm32-14 17-14 17 14v41H73z"/>
+      <path fill="#dda56d" d="M10 82h35v8H10zm29-14h37v8H39zm31-14h39v8H70z"/>
+      <path fill="#c78659" d="M17 62h9v24h-9zm31-13h9v22h-9zm32-12h9v22h-9z"/>
+      <path fill="#f0d2a4" d="M17 62h9v5h-9zm31-13h9v5h-9zm32-12h9v5h-9z"/>
+      <path fill="#6c984f" d="M8 95h104v5H8z"/>
+    </symbol>
+    <symbol id="art-opera" viewBox="0 0 120 120">
+      <path fill="#5d95a0" d="M7 94q19-5 34 0t35 0 37 0v11H7z"/>
+      <path fill="#f5eee0" d="M18 86q13-40 43-59-10 38-30 59zm17 0q18-34 55-43-22 30-44 43zm28 0q20-26 42-28-12 22-33 28z"/>
+      <path fill="#d5cbb5" d="M20 86h76v7H20z"/><path fill="#f9f4e8" d="M22 82h73v5H22z"/>
+      <path stroke="#c4b9a3" stroke-width="2" d="M23 86q19-40 38-57m-22 57q22-34 51-43m-23 43q17-22 41-28"/>
+    </symbol>
+    <symbol id="art-pyramid" viewBox="0 0 120 120">
+      <path fill="#6c9b68" d="M8 91q13-7 26 0t26 0 26 0 26 0v12H8z"/>
+      <path fill="#765646" d="M16 70q3-14 17-16l3-13q3-7 8 0l3 13q16 2 18 16v22H16z"/>
+      <path fill="#80604a" d="M45 70q3-17 18-18l3-13q3-7 8 0l3 13q15 2 18 18v22H45z"/>
+      <path fill="#96704f" d="M21 75h36v5H21zm27 0h38v5H48z"/>
+      <path fill="#574438" d="M28 83h10v9H28zm33 0h10v9H61z"/>
+      <path fill="#6a9c6a" d="M26 58q7-7 14 0v7H26zm35 0q7-7 14 0v7H61z"/>
+      <path fill="#bf7048" d="M103 59q9-8 11 2l-6 10-7-2z"/>
+      <path fill="#e8c28a" d="M101 57q7-7 11 1l-5 5-7-1z"/>
+      <path fill="#b56a46" d="M104 67 95 80l4 2 9-12z"/>
+      <path fill="#d3ac72" d="m18 93 8-5 4 6zm27 1 8-5 4 6zm30 0 8-5 4 6z"/>
+      <path fill="#81aa72" d="M10 96h101v5H10z"/>
+    </symbol>
+  </svg>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">⛏️</div>
+        <div><strong>마인크래프트<br>랜드마크 건축 교실</strong><small>상상하고, 설계하고, 함께 나눠요!</small></div>
+      </div>
+      <p class="side-label">오늘의 수업</p>
+      <nav class="chapter-nav" aria-label="수업 챕터">
+        <button class="chapter-link" type="button" data-chapter="intro" aria-current="page"><span class="chapter-number">01</span><span><b>랜드마크 만나기</b><small>10곳 미리보기</small></span></button>
+        <button class="chapter-link" type="button" data-chapter="roulette"><span class="chapter-number">02</span><span><b>랜드마크 뽑기</b><small>내가 지을 곳 정하기</small></span></button>
+        <button class="chapter-link" type="button" data-chapter="design"><span class="chapter-number">03</span><span><b>AI 설계 마스터플랜</b><small>단계별로 함께 만들기</small></span></button>
+        <button class="chapter-link" type="button" data-chapter="board"><span class="chapter-number">04</span><span><b>작품 게시판</b><small>사진과 이야기 나누기</small></span></button>
+      </nav>
+      <div class="sidebar-note"><strong>오늘의 미션 🧱</strong>세계의 멋진 건축물을 관찰하고, 나만의 마인크래프트 작품으로 만들어 보세요.</div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar"><div class="crumb">수업 자료 <span aria-hidden="true">/</span> <span id="currentCrumb">랜드마크 만나기</span></div><span class="class-badge">🌱 초등학생용 건축 프로젝트</span></div>
+      <div class="content">
+        <section class="chapter" id="chapter-intro">
+          <header class="hero">
+            <span class="eyebrow">CHAPTER 01 · 탐험 시작!</span>
+            <h1>세계의 랜드마크를<br>블록으로 만나요</h1>
+            <p>세계 곳곳의 유명한 건축물을 살펴보고, 어떤 모양과 특징이 있는지 찾아봐요. 이 중 하나를 골라 마인크래프트에서 나만의 작품으로 만들어 볼 거예요.</p>
+            <span class="hero-tag" aria-hidden="true">🌍</span>
+          </header>
+          <div class="section-head"><h2>오늘 만날 랜드마크 10곳</h2><p>랜드마크를 눌러 해당 건축 예시 이미지를 확인해 보세요.</p></div>
+          <div class="landmark-grid" id="landmarkGrid"></div>
+          <div class="info-strip">💡 <strong>관찰 포인트:</strong> 건물의 전체 모양, 반복되는 무늬, 지붕과 꼭대기의 특징을 눈여겨보세요!</div>
+        </section>
+
+        <section class="chapter" id="chapter-roulette" hidden>
+          <header class="hero">
+            <span class="eyebrow">CHAPTER 02 · 두근두근 뽑기!</span>
+            <h1>오늘 내가 만들 곳은<br>어디일까요?</h1>
+            <p>이름을 적고 룰렛을 돌려요. 한 번 뽑힌 랜드마크는 다른 친구가 다시 뽑을 수 없어요.</p>
+            <span class="hero-tag" aria-hidden="true">🎯</span>
+          </header>
+          <div class="panel roulette-layout">
+            <div class="wheel-area">
+              <div class="wheel-pointer" aria-hidden="true"></div>
+              <canvas id="rouletteWheel" width="520" height="520" role="img" aria-label="아직 뽑히지 않은 랜드마크를 보여주는 룰렛"></canvas>
+            </div>
+            <div class="roulette-side">
+              <h2>나의 랜드마크 뽑기</h2>
+              <p>친구 한 명씩 이름을 적고, 룰렛 버튼을 눌러 주세요.</p>
+              <label class="student-label" for="studentName">뽑는 친구 이름</label>
+              <input class="text-input" id="studentName" type="text" maxlength="24" placeholder="예: 민준">
+              <div class="roulette-actions">
+                <button class="btn" id="spinButton" type="button">🎡 룰렛 돌리기</button>
+                <button class="btn btn-secondary" id="undoLastSpin" type="button">↩️ 방금 뽑기 취소</button>
+                <button class="btn btn-secondary" id="resetRoulette" type="button">전체 기록 초기화</button>
+              </div>
+              <div class="spin-result" id="spinResult" role="status" aria-live="polite">준비됐나요? 이름을 적고 룰렛을 돌려 보세요!</div>
+              <h3 style="margin:15px 0 7px;font-size:14px">이미 뽑힌 랜드마크 <span id="assignedCount" class="note-small">(0/10)</span></h3>
+              <ol class="assigned-list" id="assignedList"><li class="empty-assigned">아직 뽑힌 친구가 없어요.</li></ol>
+              <p class="note-small">※ 뽑기 기록은 이 브라우저에 자동 저장돼요. 잘못 뽑았으면 ‘방금 뽑기 취소’, 새 수업을 시작할 때는 ‘전체 기록 초기화’를 눌러 주세요.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="chapter" id="chapter-design" hidden>
+          <header class="hero">
+            <span class="eyebrow">CHAPTER 03 · AI와 함께 설계!</span>
+            <h1>[AI × 마인크래프트]<br>랜드마크 건축 마스터플랜</h1>
+            <p>AI에게 질문하고, 답을 내 생각에 맞게 고쳐 보세요. 한 번에 완성하려고 하지 않아도 괜찮아요. 다섯 단계로 천천히 지어 봐요.</p>
+            <span class="hero-tag" aria-hidden="true">🤖</span>
+          </header>
+          <div class="steps">
+            <article class="step-card">
+              <div class="step-title"><span class="step-num">1</span><div><h3>AI와 함께 건물 탐색하기</h3><p>설계 준비 · 건물의 특징을 살펴보고 재료를 골라요.</p></div></div>
+              <div class="step-body">무작정 게임을 시작하기 전에 랜드마크의 생김새를 알아봐요. 어떤 색 블록과 재료가 필요할지 정하고 인벤토리에서 꺼내요.
+                <ul><li>건물에서 가장 눈에 띄는 특징 세 가지를 찾아요.</li><li>비슷한 색과 모양의 마인크래프트 블록을 골라요.</li></ul>
+              </div>
+              <details class="prompt-box"><summary>✨ 활용 프롬프트 보기 (눌러서 열기)</summary><div class="prompt-content"><blockquote>안녕! 나는 초등학생이야. 마인크래프트에서 [내 랜드마크 이름]을 작고 멋지게 만들고 싶어. 이 건물의 가장 멋진 특징 3가지는 뭐야? 게임에서 비슷하게 만들려면 어떤 색깔과 종류의 블록을 준비하면 좋을지 쉬운 말로 알려줘.</blockquote><button class="btn btn-quiet copy-prompt" type="button">프롬프트 복사</button></div></details>
+            </article>
+            <article class="step-card">
+              <div class="step-title"><span class="step-num">2</span><div><h3>레고 설명서처럼 순서 정하기</h3><p>도면 기획 · 바닥부터 꼭대기까지 차례를 만들어요.</p></div></div>
+              <div class="step-body">큰 건물도 작은 조각으로 나누면 쉽게 만들 수 있어요. 바닥 크기와 기둥 높이를 숫자로 정하면 게임에서 따라 하기 편해요.
+                <ul><li>1단계: 바닥 모양과 가로·세로 크기 정하기</li><li>2단계: 기둥과 벽의 높이 정하기</li><li>3단계: 창문·무늬·지붕 붙이기</li><li>4단계: 색을 더하고 주변 꾸미기</li></ul>
+              </div>
+              <details class="prompt-box"><summary>✨ 활용 프롬프트 보기 (눌러서 열기)</summary><div class="prompt-content"><blockquote>이제 [내 랜드마크 이름]을 직접 지을 거야! 내가 보고 따라 할 수 있게 레고 조립 설명서처럼 딱 4단계로 나누어 설명해 줘. 바닥은 가로·세로 몇 칸인지, 기둥은 위로 몇 칸 쌓는지 정확한 숫자를 써 줘. 초등학생이 이해하기 쉬운 말로 알려주고, 너무 큰 건물 대신 작고 만들기 쉬운 크기로 설계해 줘.</blockquote><button class="btn btn-quiet copy-prompt" type="button">프롬프트 복사</button></div></details>
+            </article>
+            <article class="step-card">
+              <div class="step-title"><span class="step-num">3</span><div><h3>공책에 나만의 설계도 그리기</h3><p>그림으로 상상하기 · 게임에 들어가기 전 모양을 그려요.</p></div></div>
+              <div class="step-body">AI가 알려 준 설명을 읽고, 앞에서 본 모습과 옆에서 본 모습을 간단히 그려요. 블록을 어디에 놓을지 화살표와 숫자로 적어 두면 좋아요.</div>
+              <details class="prompt-box"><summary>✨ 활용 프롬프트 보기 (눌러서 열기)</summary><div class="prompt-content"><blockquote>네가 알려준 4단계 설명서를 공책에 그림으로 그려보고 싶어. 각 단계가 끝났을 때 어떤 모양이 되는지 앞에서 본 모습과 옆에서 본 모습으로 나누어 자세히 설명해 줘. 블록을 어디에 놓는지, 몇 칸인지도 알려줘. 어려운 말은 쓰지 말아 줘.</blockquote><button class="btn btn-quiet copy-prompt" type="button">프롬프트 복사</button></div></details>
+            </article>
+            <article class="step-card">
+              <div class="step-title"><span class="step-num">4</span><div><h3>마인크래프트에서 직접 짓기</h3><p>블록 쌓기 · 만들다가 막히면 AI 선생님에게 물어봐요.</p></div></div>
+              <div class="step-body">설계도를 보며 바닥부터 차근차근 쌓아요. 처음 계획과 달라져도 괜찮아요. 내가 더 좋아하는 모양으로 바꾸어도 나만의 작품이에요.
+                <ul><li>한 단계씩 만들고 멀리서 전체 모양을 확인해요.</li><li>높이나 블록 수가 헷갈리면 먼저 AI에게 다시 물어봐요.</li><li>AI의 답을 그대로 따르기보다 게임에서 되는지 확인해요.</li></ul>
+              </div>
+              <details class="prompt-box"><summary>✨ 막혔을 때 활용 프롬프트 보기 (눌러서 열기)</summary><div class="prompt-content"><blockquote>도와줘! [내 랜드마크에서 만들기 어려운 부분]을 만들고 싶은데 잘 안돼. 지금 바닥은 가로·세로 [숫자]칸이고, 내가 가진 블록은 [블록 이름]이야. 지금 상황에서 할 수 있는 쉬운 방법을 한 단계씩 알려줘. 한 번에 한 가지씩 설명해 줘.</blockquote><button class="btn btn-quiet copy-prompt" type="button">프롬프트 복사</button></div></details>
+            </article>
+            <article class="step-card">
+              <div class="step-title"><span class="step-num">5</span><div><h3>찰칵! 스크린샷 찍고 발표하기</h3><p>나만의 전시회 · 작품 사진과 만든 이야기를 친구들과 나눠요.</p></div></div>
+              <div class="step-body">완성된 작품의 스크린샷을 찍어 4장 게시판에 올려요. 정면이나 옆면처럼 서로 다른 모습으로 찍어도 좋아요. 사용한 블록, 가장 힘들었던 점, 해결한 방법을 발표해 봐요.
+                <ul><li>자바 에디션은 보통 F2 키로 스크린샷을 찍어요. 다른 버전은 게임의 안내를 확인해요.</li><li>사진에 내 계정 이름이나 개인정보가 보이지 않는지 살펴봐요.</li><li>작품 게시판에서 사진을 골라 글과 함께 올려요.</li></ul>
+              </div>
+              <details class="prompt-box"><summary>✨ 발표 준비 프롬프트 보기 (눌러서 열기)</summary><div class="prompt-content"><blockquote>드디어 [내 랜드마크 이름]을 완성했어! 친구들 앞에서 발표할 1분짜리 발표문을 만들어 줘. 작품의 멋진 점, 만들면서 가장 힘들었던 점, 그 문제를 해결한 방법을 말하고 싶어. 내가 직접 채워 넣을 수 있도록 [빈칸]을 넣어 줘. 초등학생이 읽기 쉬운 말로 써 줘.</blockquote><button class="btn btn-quiet copy-prompt" type="button">프롬프트 복사</button></div></details>
+              <div class="prompt-tip">🔒 이름, 학교, 주소, 계정 정보 같은 개인정보는 AI와 게시판에 입력하지 않아요. AI의 답은 틀릴 수 있으니 선생님과 함께 확인해요.</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="chapter" id="chapter-board" hidden>
+          <header class="hero">
+            <span class="eyebrow">CHAPTER 04 · 우리 반 작품 전시회!</span>
+            <h1>사진을 붙이고<br>내 작품을 소개해요</h1>
+            <p>메모장에 쓰듯 제목과 이야기를 적고 스크린샷을 붙여 보세요. 친구들의 작품에도 따뜻한 칭찬을 남겨요.</p>
+            <span class="hero-tag" aria-hidden="true">📌</span>
+          </header>
+          <div class="board-toolbar">
+            <p>게시물 <strong id="postCount">0</strong>개 · 이 브라우저에 자동 저장돼요.</p>
+            <div class="board-actions">
+              <button class="btn btn-secondary btn-quiet" id="exportPosts" type="button">게시판 내보내기</button>
+              <button class="btn btn-secondary btn-quiet" id="importPosts" type="button">게시판 가져오기</button>
+              <input id="importFile" type="file" accept="application/json,.json" hidden>
+            </div>
+          </div>
+          <form class="composer" id="postForm">
+            <h2>✏️ 새 게시물 쓰기</h2>
+            <div class="composer-grid">
+              <div class="field"><label for="postAuthor">내 이름 (별명도 좋아요)</label><input class="note-input" id="postAuthor" maxlength="24" placeholder="예: 블록마법사" autocomplete="off"></div>
+              <div class="field"><label for="postTitle">게시물 제목</label><input class="note-input" id="postTitle" maxlength="70" placeholder="예: 나만의 피사의 사탑 완성!" required></div>
+              <div class="field wide"><label for="postBody">작품 이야기</label><textarea class="note-area" id="postBody" maxlength="1200" placeholder="어떤 랜드마크를 만들었나요? 사용한 블록이나 만들면서 재미있었던 점을 적어 주세요." required></textarea></div>
+              <div class="field wide"><label for="postImage">스크린샷 붙이기 (선택)</label><div class="upload-box"><input id="postImage" type="file" accept="image/*"><span class="note-small">이미지를 고르면 게시물에 미리보기가 붙어요. 사진은 이 기기에 저장됩니다.</span><div class="image-preview" id="imagePreview" aria-live="polite"></div></div></div>
+            </div>
+            <div class="composer-bottom"><span class="note-small">사진에는 본명, 학교, 계정 이름 등 개인정보가 보이지 않도록 확인하세요.</span><button class="btn" type="submit">📌 게시물 올리기</button></div>
+          </form>
+          <div class="posts" id="posts" aria-live="polite"></div>
+          <div class="info-strip">📦 친구와 나누려면 <strong>게시판 내보내기</strong>로 파일을 만든 뒤 전달하고, 친구가 <strong>게시판 가져오기</strong>를 눌러 그 파일을 선택하면 돼요. 같은 기기·브라우저에서는 자동으로 함께 보여요.</div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+    const landmarks = [
+      { id: "palace", name: "숭례문", place: "대한민국 서울", description: "서울 한양도성의 남쪽 대문으로, 돌로 쌓은 성문 위에 나무 누각이 있어요.", tip: "돌문 위의 2층 누각과 지붕", color: "#e5f0df", image: "assets/landmarks/sungnyemun.png" },
+      { id: "eiffel", name: "에펠탑", place: "프랑스 파리", description: "철골이 격자무늬처럼 이어진 높고 뾰족한 탑이에요.", tip: "위로 갈수록 좁아지는 탑", color: "#e1eff1", image: "assets/landmarks/eiffel-tower.png" },
+      { id: "pisa", name: "피사의 사탑", place: "이탈리아 피사", description: "여러 층의 둥근 아치가 있고, 한쪽으로 기울어진 탑이에요.", tip: "기울어진 흰색 탑", color: "#f3eadb", image: "assets/landmarks/leaning-tower-of-pisa.png" },
+      { id: "colosseum", name: "콜로세움", place: "이탈리아 로마", description: "아치형 문이 빙 둘러 있는 거대한 원형 경기장이에요.", tip: "반복되는 아치 문", color: "#f4e6d8", image: "assets/landmarks/colosseum.png" },
+      { id: "taj", name: "타지마할", place: "인도 아그라", description: "하얀 대리석과 가운데 둥근 돔이 인상적인 건축물이에요.", tip: "가운데 큰 둥근 지붕", color: "#f4efe1", image: "assets/landmarks/taj-mahal.png" },
+      { id: "bigben", name: "빅 벤", place: "영국 런던", description: "커다란 시계와 뾰족한 꼭대기가 있는 시계탑이에요.", tip: "시계가 있는 높은 탑", color: "#f4ecd9", image: "assets/landmarks/big-ben.png" },
+      { id: "liberty", name: "자유의 여신상", place: "미국 뉴욕", description: "손에 횃불을 든 커다란 청록색 동상이에요.", tip: "횃불과 넓은 받침대", color: "#e2efe8", image: "assets/landmarks/statue-of-liberty.png" },
+      { id: "wall", name: "만리장성", place: "중국", description: "산을 따라 길게 이어지고, 곳곳에 망루가 있어요.", tip: "이어지는 성벽과 망루", color: "#ebefdf", image: "assets/landmarks/great-wall.png" },
+      { id: "opera", name: "시드니 오페라 하우스", place: "호주 시드니", description: "바닷가에 조개껍데기처럼 생긴 지붕이 펼쳐져 있어요.", tip: "부채처럼 펼친 흰 지붕", color: "#e3f1ef", image: "assets/landmarks/sydney-opera-house.png" },
+      { id: "pyramid", name: "거북선", place: "대한민국 조선 시대", description: "거북이 등처럼 덮인 지붕과 용머리가 특징인 조선 시대의 군함이에요.", tip: "거북 등 모양의 지붕과 용머리", color: "#e7eee0", image: "assets/landmarks/turtle-ship.png" }
+    ];
+    const STORE = { roulette: "landmark-classroom-roulette-v1", posts: "landmark-classroom-posts-v1" };
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+    let assigned = readStored(STORE.roulette, []);
+    let posts = readStored(STORE.posts, []);
+    let selectedImage = "";
+    let wheelRotation = 0;
+    let spinning = false;
+    let toastTimer;
+
+    function readStored(key, fallback) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || "null");
+        return Array.isArray(value) ? value : fallback;
+      } catch (error) {
+        console.error(`저장된 자료를 읽지 못했습니다 (${key}).`, error);
+        return fallback;
+      }
+    }
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+    function saveLocal(key, value, label) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (error) {
+        console.error(`${label}을(를) 저장하지 못했습니다.`, error);
+        showToast("기기에 저장할 공간이 부족해요. 사진 크기를 줄이거나 게시물을 지워 주세요.");
+        return false;
+      }
+    }
+    function renderLandmarks() {
+      $("#landmarkGrid").innerHTML = landmarks.map(item => {
+        const panelId = `examples-${item.id}`;
+        return `
+          <article class="landmark-card">
+            <button class="landmark-trigger" type="button" data-example-id="${item.id}" aria-expanded="false" aria-controls="${panelId}">
+              <span class="landmark-art" style="--art-bg:${item.color}" role="img" aria-label="${item.name} 그림">
+                <svg viewBox="0 0 120 120" aria-hidden="true"><use href="#art-${item.id}"></use></svg>
+              </span>
+              <span class="landmark-copy"><strong style="display:block;margin-bottom:5px;font-size:16px">${item.name}</strong><span style="display:block;color:var(--muted);font-size:12px;line-height:1.55">${item.place} · ${item.description}</span><span class="build-tip">🧱 ${item.tip}</span><span style="display:block;margin-top:6px;color:var(--green);font-size:11px;font-weight:800">눌러서 마인크래프트 예시 보기　⌄</span></span>
+            </button>
+            <div class="landmark-example" id="${panelId}" hidden>
+              <div class="example-heading"><h4>${item.name} 마인크래프트 건축 예시</h4></div>
+              <img class="landmark-example-image" src="${item.image}" alt="${item.name}을 마인크래프트 블록으로 만든 예시">
+              <p class="example-note">선생님이 고른 ${item.name} 건축 예시 이미지예요. 모양과 블록 표현을 관찰하고 나만의 작품을 설계해 보세요.</p>
+            </div>
+          </article>`;
+      }).join("");
+    }
+    function navigate(chapter) {
+      $$(".chapter").forEach(section => { section.hidden = section.id !== `chapter-${chapter}`; });
+      $$(".chapter-link").forEach(button => {
+        if (button.dataset.chapter === chapter) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      $("#currentCrumb").textContent = ({ intro: "랜드마크 만나기", roulette: "랜드마크 뽑기", design: "AI 설계 마스터플랜", board: "작품 게시판" })[chapter];
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (chapter === "roulette") drawWheel();
+      if (chapter === "board") renderPosts();
+    }
+    function drawWheel() {
+      const canvas = $("#rouletteWheel");
+      const ctx = canvas.getContext("2d");
+      const available = landmarks.filter(item => !assigned.some(record => record.landmarkId === item.id));
+      const cx = canvas.width / 2, cy = canvas.height / 2, radius = 238;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!available.length) {
+        ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fillStyle = "#e9eee8"; ctx.fill();
+        ctx.fillStyle = "#667085"; ctx.font = "bold 23px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("모두 뽑혔어요!", cx, cy - 4);
+        ctx.font = "17px sans-serif"; ctx.fillText("처음부터 눌러 다시 시작", cx, cy + 30);
+        return;
+      }
+      const slice = (Math.PI * 2) / available.length;
+      const colors = ["#ffd166", "#91c9ae", "#f49b7b", "#a9c4ee", "#e9b8d5", "#c5d99b", "#f3c893", "#a9dad4", "#c2b2e7", "#f1a7a2"];
+      available.forEach((item, i) => {
+        const start = -Math.PI / 2 + i * slice, end = start + slice;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, radius, start, end); ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length]; ctx.fill();
+        ctx.strokeStyle = "#fffdf7"; ctx.lineWidth = 4; ctx.stroke();
+        const mid = start + slice / 2;
+        ctx.save(); ctx.translate(cx + Math.cos(mid) * radius * .65, cy + Math.sin(mid) * radius * .65); ctx.rotate(mid + Math.PI / 2);
+        ctx.fillStyle = "#263247"; ctx.font = `bold ${available.length > 7 ? 14 : 17}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(item.name, 0, 0, radius * .72); ctx.restore();
+      });
+      ctx.beginPath(); ctx.arc(cx, cy, 27, 0, Math.PI * 2); ctx.fillStyle = "#fffdf7"; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2); ctx.fillStyle = "#263247"; ctx.fill();
+    }
+    function renderAssignments() {
+      $("#assignedCount").textContent = `(${assigned.length}/10)`;
+      $("#assignedList").innerHTML = assigned.length
+        ? assigned.map((record, i) => `<li><strong>${escapeHtml(record.name)}</strong> — ${escapeHtml(landmarks.find(item => item.id === record.landmarkId)?.name || "알 수 없는 랜드마크")}</li>`).join("")
+        : '<li class="empty-assigned">아직 뽑힌 친구가 없어요.</li>';
+      $("#spinButton").disabled = spinning || assigned.length >= landmarks.length;
+      $("#undoLastSpin").disabled = spinning || assigned.length === 0;
+      $("#resetRoulette").disabled = spinning;
+      drawWheel();
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+    }
+    function spinWheel() {
+      if (spinning) return;
+      const name = $("#studentName").value.trim();
+      if (!name) { $("#studentName").focus(); showToast("먼저 뽑는 친구 이름을 적어 주세요."); return; }
+      const available = landmarks.filter(item => !assigned.some(record => record.landmarkId === item.id));
+      if (!available.length) { showToast("모든 랜드마크를 뽑았어요. 처음부터 다시 시작해 주세요."); return; }
+      const winnerIndex = Math.floor(Math.random() * available.length);
+      const winner = available[winnerIndex];
+      const sliceDegrees = 360 / available.length;
+      const desired = (360 - (winnerIndex + .5) * sliceDegrees + 360) % 360;
+      const current = ((wheelRotation % 360) + 360) % 360;
+      wheelRotation += 360 * 5 + ((desired - current + 360) % 360);
+      spinning = true;
+      $("#spinButton").disabled = true;
+      $("#undoLastSpin").disabled = true;
+      $("#resetRoulette").disabled = true;
+      $("#spinResult").innerHTML = "빙글빙글… 어디가 나올까요? 🎡";
+      const canvas = $("#rouletteWheel");
+      canvas.style.transition = "transform 3.2s cubic-bezier(.12,.72,.13,1)";
+      canvas.style.transform = `rotate(${wheelRotation}deg)`;
+      setTimeout(() => {
+        assigned.push({ name, landmarkId: winner.id });
+        const saved = saveLocal(STORE.roulette, assigned, "룰렛 기록");
+        if (!saved) assigned.pop();
+        else {
+          $("#spinResult").innerHTML = `🎉 <strong>${escapeHtml(name)} 친구는 ${escapeHtml(winner.name)}을(를) 만들어요!</strong><br><span class="note-small">다음 친구에게 차례를 넘겨 주세요.</span>`;
+          $("#studentName").value = "";
+        }
+        spinning = false;
+        renderAssignments();
+      }, 3300);
+    }
+    function renderPosts() {
+      $("#postCount").textContent = String(posts.length);
+      const container = $("#posts");
+      if (!posts.length) {
+        container.innerHTML = '<div class="empty-posts">아직 게시물이 없어요.<br>첫 작품 사진과 이야기를 올려 전시회를 시작해 보세요! 🏗️</div>';
+        return;
+      }
+      container.innerHTML = posts.map(post => `
+        <article class="post-card">
+          ${post.image ? `<img class="post-image" src="${post.image}" alt="${escapeHtml(post.title)} 스크린샷">` : ""}
+          <div class="post-content">
+            <div class="post-meta"><span>👤 ${escapeHtml(post.author || "익명 친구")}</span><time>${escapeHtml(post.date)}</time></div>
+            <h3>${escapeHtml(post.title)}</h3><p>${escapeHtml(post.body)}</p>
+            <button class="post-delete" type="button" data-delete-post="${escapeHtml(post.id)}" aria-label="${escapeHtml(post.title)} 게시물 지우기">이 게시물 지우기</button>
+          </div>
+        </article>`).join("");
+    }
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) { reject(new Error("JPG, PNG, WebP, GIF 이미지 파일을 선택해 주세요.")); return; }
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("이미지 파일을 읽지 못했어요."));
+        reader.onload = () => {
+          const image = new Image();
+          image.onerror = () => reject(new Error("이미지를 열지 못했어요."));
+          image.onload = () => {
+            const scale = Math.min(1, 1200 / Math.max(image.naturalWidth, image.naturalHeight));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+            canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", .78));
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    function download(filename, content, type) {
+      const url = URL.createObjectURL(new Blob([content], { type }));
+      const link = document.createElement("a");
+      link.href = url; link.download = filename; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    renderLandmarks();
+    renderAssignments();
+    renderPosts();
+    $("#landmarkGrid").addEventListener("click", event => {
+      const trigger = event.target.closest("[data-example-id]");
+      if (!trigger) return;
+      const panel = document.getElementById(trigger.getAttribute("aria-controls"));
+      const opening = panel.hidden;
+      $$(".landmark-example", $("#landmarkGrid")).forEach(otherPanel => {
+        if (otherPanel === panel) return;
+        otherPanel.hidden = true;
+        $(`[aria-controls="${otherPanel.id}"]`, $("#landmarkGrid")).setAttribute("aria-expanded", "false");
+      });
+      panel.hidden = !opening;
+      trigger.setAttribute("aria-expanded", String(opening));
+    });
+    $$(".chapter-link").forEach(button => button.addEventListener("click", () => navigate(button.dataset.chapter)));
+    $("#spinButton").addEventListener("click", spinWheel);
+    $("#studentName").addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); spinWheel(); } });
+    $("#undoLastSpin").addEventListener("click", () => {
+      if (spinning || assigned.length === 0) return;
+      const removed = assigned.pop();
+      if (!saveLocal(STORE.roulette, assigned, "룰렛 기록")) {
+        assigned.push(removed);
+        return;
+      }
+      wheelRotation = 0;
+      $("#rouletteWheel").style.transition = "none";
+      $("#rouletteWheel").style.transform = "rotate(0deg)";
+      $("#studentName").value = removed.name;
+      const landmarkName = landmarks.find(item => item.id === removed.landmarkId)?.name || "랜드마크";
+      $("#spinResult").textContent = `${removed.name} 친구의 ${landmarkName} 뽑기를 취소했어요. 다시 돌려 보세요!`;
+      renderAssignments();
+    });
+    $("#resetRoulette").addEventListener("click", () => {
+      if (!assigned.length || window.confirm("뽑힌 기록을 모두 지우고 처음부터 시작할까요?")) {
+        assigned = []; wheelRotation = 0;
+        $("#rouletteWheel").style.transition = "none";
+        $("#rouletteWheel").style.transform = "rotate(0deg)";
+        saveLocal(STORE.roulette, assigned, "룰렛 기록");
+        $("#spinResult").textContent = "준비됐나요? 이름을 적고 룰렛을 돌려 보세요!";
+        renderAssignments();
+      }
+    });
+    $$(".copy-prompt").forEach(button => button.addEventListener("click", async () => {
+      const prompt = $("blockquote", button.closest(".prompt-content")).textContent;
+      try { await navigator.clipboard.writeText(prompt); showToast("프롬프트를 복사했어요. AI 채팅창에 붙여 넣어 보세요!"); }
+      catch (error) { console.error("프롬프트를 클립보드에 복사하지 못했습니다.", error); showToast("복사할 수 없어요. 프롬프트를 직접 선택해 복사해 주세요."); }
+    }));
+    $("#postImage").addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      selectedImage = "";
+      $("#imagePreview").replaceChildren();
+      if (!file) return;
+      try {
+        selectedImage = await compressImage(file);
+        const img = document.createElement("img");
+        img.src = selectedImage; img.alt = "게시물에 올릴 사진 미리보기";
+        const label = document.createElement("span");
+        label.textContent = `${file.name} · 사진을 붙였어요`;
+        $("#imagePreview").append(img, label);
+      } catch (error) {
+        console.error("이미지 처리에 실패했습니다.", error);
+        showToast(error.message || "이미지를 준비하지 못했어요.");
+        event.target.value = "";
+      }
+    });
+    $("#postForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const title = $("#postTitle").value.trim(), body = $("#postBody").value.trim();
+      if (!title || !body) { showToast("제목과 작품 이야기를 모두 적어 주세요."); return; }
+      const post = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        author: $("#postAuthor").value.trim(), title, body, image: selectedImage,
+        date: new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "short", day: "numeric" }).format(new Date())
+      };
+      posts.unshift(post);
+      if (!saveLocal(STORE.posts, posts, "게시물")) { posts.shift(); return; }
+      event.target.reset(); selectedImage = ""; $("#imagePreview").replaceChildren();
+      renderPosts(); showToast("작품을 게시판에 올렸어요! 멋진 작품이에요 🎉");
+    });
+    $("#posts").addEventListener("click", event => {
+      const button = event.target.closest("[data-delete-post]");
+      if (!button) return;
+      const index = posts.findIndex(post => post.id === button.dataset.deletePost);
+      if (index < 0) return;
+      const [removed] = posts.splice(index, 1);
+      if (!saveLocal(STORE.posts, posts, "게시물")) posts.splice(index, 0, removed);
+      renderPosts();
+    });
+    $("#exportPosts").addEventListener("click", () => {
+      if (!posts.length) { showToast("내보낼 게시물이 아직 없어요."); return; }
+      download("마인크래프트-랜드마크-게시판.json", JSON.stringify({ version: 1, posts }, null, 2), "application/json");
+      showToast("게시판 파일을 저장했어요. 친구에게 전달해 보세요!");
+    });
+    $("#importPosts").addEventListener("click", () => $("#importFile").click());
+    $("#importFile").addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (data?.version !== 1 || !Array.isArray(data.posts) || data.posts.some(post =>
+          typeof post.id !== "string" || typeof post.title !== "string" || typeof post.body !== "string" ||
+          typeof post.author !== "string" || typeof post.date !== "string" ||
+          (post.image !== "" && (typeof post.image !== "string" || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(post.image)))
+        )) throw new Error("게시판 파일 형식이 올바르지 않아요.");
+        const merged = [...data.posts.filter(incoming => !posts.some(existing => existing.id === incoming.id)), ...posts];
+        if (!saveLocal(STORE.posts, merged, "게시물")) return;
+        posts = merged; renderPosts(); showToast(`${data.posts.length}개 게시물을 확인했어요.`);
+      } catch (error) {
+        console.error("게시판 파일을 가져오지 못했습니다.", error);
+        showToast(error.message || "게시판 파일을 읽지 못했어요.");
+      } finally { event.target.value = ""; }
+    });
+  </script>
+</body>
+</html>
