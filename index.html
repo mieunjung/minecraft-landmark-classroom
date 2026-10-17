@@ -240,15 +240,12 @@
 <body>
   <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
     <symbol id="art-palace" viewBox="0 0 120 120">
-      <path fill="#78a66c" d="M7 96h106v7H7z"/>
-      <path fill="#d8c39c" d="M22 50h76v43H22z"/>
-      <path fill="#a94c3c" d="M16 48q10 0 16-7 15 6 28-11 13 21 28 11 6 7 16 7l-5 8H21z"/>
-      <path fill="#6e4638" d="M17 48q12-1 17-9 15 7 26-10 12 21 26 10 6 8 17 9v5H17z"/>
-      <path fill="#b75b42" d="M28 55h7v38h-7zm27 0h9v38h-9zm31 0h7v38h-7z"/>
-      <path fill="#55463b" d="M19 92h82v5H19z"/>
-      <path fill="#59463b" d="M43 92V72q17-21 34 0v20z"/>
-      <path fill="#e2c89a" d="M48 92V74q12-14 24 0v18z"/>
-      <path fill="#9d4537" d="M45 74q15-17 30 0l-4 4q-11-12-22 0z"/>
+      <path fill="#d8c28b" d="M15 93 60 19l45 74z"/>
+      <path fill="#f0dba8" d="m60 19 45 74H60z"/>
+      <path fill="#c4a772" d="M15 91h90v7H15z"/>
+      <path fill="#e6d19b" d="M26 77h68v5H26zm10-16h48v5H36zm10-16h28v5H46z"/>
+      <path fill="#b19263" d="M52 26h16v10H52z"/>
+      <path fill="#617d69" d="M7 98h106v6H7z"/>
     </symbol>
     <symbol id="art-eiffel" viewBox="0 0 120 120">
       <path fill="#4d6c72" d="M55 16h10l2 10h-14zM54 27h12l5 30h-22zM46 58h28l8 26H38zM36 83h48l10 12H26z"/>
@@ -299,10 +296,16 @@
       <path fill="#6c984f" d="M8 95h104v5H8z"/>
     </symbol>
     <symbol id="art-opera" viewBox="0 0 120 120">
-      <path fill="#5d95a0" d="M7 94q19-5 34 0t35 0 37 0v11H7z"/>
-      <path fill="#f5eee0" d="M18 86q13-40 43-59-10 38-30 59zm17 0q18-34 55-43-22 30-44 43zm28 0q20-26 42-28-12 22-33 28z"/>
-      <path fill="#d5cbb5" d="M20 86h76v7H20z"/><path fill="#f9f4e8" d="M22 82h73v5H22z"/>
-      <path stroke="#c4b9a3" stroke-width="2" d="M23 86q19-40 38-57m-22 57q22-34 51-43m-23 43q17-22 41-28"/>
+      <path fill="#8a7762" d="M10 99h100v5H10z"/>
+      <path fill="#75634f" d="M22 90h76v8H22zM29 83h62v7H29z"/>
+      <path fill="#92806a" d="M34 67h52v16H34z"/>
+      <path fill="#6f604e" d="M25 62h70v6H25z"/>
+      <path fill="#8c7961" d="M40 48h40v14H40z"/>
+      <path fill="#665847" d="M29 44h62v5H29z"/>
+      <path fill="#97846a" d="M46 32h28v12H46z"/>
+      <path fill="#665847" d="M34 28h52v5H34zM51 22h18v6H51z"/>
+      <path fill="#8c7961" d="M55 15h10v7H55zM57 8h6v7H57zM59 3h2v5h-2z"/>
+      <path fill="#554a3c" d="M20 90h5v8h-5zm75 0h5v8h-5z"/>
     </symbol>
     <symbol id="art-pyramid" viewBox="0 0 120 120">
       <path fill="#6c9b68" d="M8 91q13-7 26 0t26 0 26 0 26 0v12H8z"/>
@@ -473,7 +476,7 @@
   <script>
     "use strict";
     const landmarks = [
-      { id: "palace", name: "숭례문", place: "대한민국 서울", description: "서울 한양도성의 남쪽 대문으로, 돌로 쌓은 성문 위에 나무 누각이 있어요.", tip: "돌문 위의 2층 누각과 지붕", color: "#e5f0df", image: "assets/landmarks/sungnyemun.png" },
+      { id: "pyramid", name: "이집트 피라미드", place: "이집트 기자", description: "넓은 바닥에서 꼭대기까지 층층이 올라가는 거대한 삼각형 건축물이에요.", tip: "층층이 쌓은 삼각형과 뾰족한 꼭대기", color: "#f5eddb", image: "assets/landmarks/pyramid.png" },
       { id: "eiffel", name: "에펠탑", place: "프랑스 파리", description: "철골이 격자무늬처럼 이어진 높고 뾰족한 탑이에요.", tip: "위로 갈수록 좁아지는 탑", color: "#e1eff1", image: "assets/landmarks/eiffel-tower.png" },
       { id: "pisa", name: "피사의 사탑", place: "이탈리아 피사", description: "여러 층의 둥근 아치가 있고, 한쪽으로 기울어진 탑이에요.", tip: "기울어진 흰색 탑", color: "#f3eadb", image: "assets/landmarks/leaning-tower-of-pisa.png" },
       { id: "colosseum", name: "콜로세움", place: "이탈리아 로마", description: "아치형 문이 빙 둘러 있는 거대한 원형 경기장이에요.", tip: "반복되는 아치 문", color: "#f4e6d8", image: "assets/landmarks/colosseum.png" },
@@ -481,7 +484,7 @@
       { id: "bigben", name: "빅 벤", place: "영국 런던", description: "커다란 시계와 뾰족한 꼭대기가 있는 시계탑이에요.", tip: "시계가 있는 높은 탑", color: "#f4ecd9", image: "assets/landmarks/big-ben.png" },
       { id: "liberty", name: "자유의 여신상", place: "미국 뉴욕", description: "손에 횃불을 든 커다란 청록색 동상이에요.", tip: "횃불과 넓은 받침대", color: "#e2efe8", image: "assets/landmarks/statue-of-liberty.png" },
       { id: "wall", name: "만리장성", place: "중국", description: "산을 따라 길게 이어지고, 곳곳에 망루가 있어요.", tip: "이어지는 성벽과 망루", color: "#ebefdf", image: "assets/landmarks/great-wall.png" },
-      { id: "opera", name: "시드니 오페라 하우스", place: "호주 시드니", description: "바닷가에 조개껍데기처럼 생긴 지붕이 펼쳐져 있어요.", tip: "부채처럼 펼친 흰 지붕", color: "#e3f1ef", image: "assets/landmarks/sydney-opera-house.png" },
+      { id: "seokgatap", name: "석가탑", place: "대한민국 경주 불국사", description: "불국사에 있는 통일 신라 시대의 석탑으로, 단정하고 균형 잡힌 돌층이 쌓여 있어요.", tip: "층층이 쌓은 돌과 넓은 지붕돌", color: "#e6ecef", image: "assets/landmarks/seokgatap.png" },
       { id: "pyramid", name: "거북선", place: "대한민국 조선 시대", description: "거북이 등처럼 덮인 지붕과 용머리가 특징인 조선 시대의 군함이에요.", tip: "거북 등 모양의 지붕과 용머리", color: "#e7eee0", image: "assets/landmarks/turtle-ship.png" }
     ];
     const STORE = { roulette: "landmark-classroom-roulette-v1", posts: "landmark-classroom-posts-v1" };
